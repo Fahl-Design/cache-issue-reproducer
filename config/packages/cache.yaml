@@ -1,0 +1,34 @@
+services:
+    redis.provider.one:
+        class: Redis
+        factory: [ 'Symfony\Component\Cache\Adapter\RedisTagAwareAdapter', 'createConnection' ]
+        arguments:
+            - '%env(DSN_REDIS)%/1'
+
+    redis.provider.two:
+        class: Redis
+        factory: [ 'Symfony\Component\Cache\Adapter\RedisTagAwareAdapter', 'createConnection' ]
+        arguments:
+            - '%env(DSN_REDIS)%/2'
+
+    'cache.adapter.redis.one':
+        parent: 'cache.adapter.redis_tag_aware'
+        arguments:
+            $redis: '@redis.provider.one'
+            $namespace: 'fancy_namespace'
+
+    'cache.adapter.redis.two':
+        parent: 'cache.adapter.redis_tag_aware'
+        arguments:
+            $redis: '@redis.provider.two'
+            $namespace: 'other_fancy_namespace'
+
+framework:
+    cache:
+        pools:
+            fancy_cache_pool:
+                default_lifetime: 31536000  # One year
+                adapters:
+                    - cache.adapter.redis.one
+                    - cache.adapter.redis.two
+                tags: true
